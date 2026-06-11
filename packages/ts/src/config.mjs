@@ -186,7 +186,7 @@ export function loadConfig(opts = {}) {
   );
   // Resolve the proxy once so the rest of the harness never consults env.
   if (!config.httpProxy && config.proxyFromEnv) {
-    config.httpProxy = env.HTTPS_PROXY ?? env.HTTP_PROXY ?? null;
+    config.httpProxy = env.COPILOT_HTTPS_PROXY ?? env.HTTPS_PROXY ?? env.HTTP_PROXY ?? null;
   }
   return validateConfig(config);
 }
