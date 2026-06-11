@@ -11,8 +11,11 @@ import path from 'node:path';
 
 export const REASONING_EFFORTS = ['low', 'medium', 'high', 'xhigh'];
 
-/** @returns {object} deep copy of the harness defaults */
-export function defaultConfig() {
+/**
+ * @param {NodeJS.ProcessEnv} [env] environment consulted for default values
+ * @returns {object} deep copy of the harness defaults
+ */
+export function defaultConfig(env = process.env) {
   return {
     // --- runtime / CLI wiring ---
     cliPath: null,            // explicit path to the @github/copilot CLI entry (CLI_PATH)
@@ -26,8 +29,8 @@ export function defaultConfig() {
     githubToken: null,
 
     // --- model behavior ---
-    model: 'gpt-5-mini',
-    reasoningEffort: 'low',
+    model: env.COPILOT_CLI_MODEL ?? 'gpt-5-mini',
+    reasoningEffort: env.COPILOT_CLI_REASON_EFFORT ?? 'low',
     streaming: false,
     requestTimeoutMs: 120_000,
 
@@ -179,14 +182,14 @@ export function validateConfig(config) {
 export function loadConfig(opts = {}) {
   const { configFile, overrides, env = process.env } = opts;
   const config = mergeConfig(
-    defaultConfig(),
+    defaultConfig(env),
     loadConfigFile(configFile),
     configFromEnv(env),
     overrides,
   );
   // Resolve the proxy once so the rest of the harness never consults env.
   if (!config.httpProxy && config.proxyFromEnv) {
-    config.httpProxy = env.COPILOT_HTTPS_PROXY ?? env.HTTPS_PROXY ?? env.HTTP_PROXY ?? null;
+    config.httpProxy = env.COPILOT_CLI_PROXY ?? env.HTTPS_PROXY ?? env.HTTP_PROXY ?? null;
   }
   return validateConfig(config);
 }
