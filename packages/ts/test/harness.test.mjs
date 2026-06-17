@@ -9,6 +9,8 @@ import {
   createHarness,
   formatSSE,
   renderContextPreamble,
+  assertUserMessage,
+  EmptyPromptError,
 } from "../src/harness.mjs";
 import { TokenBudgetExceededError } from "../src/tokens.mjs";
 import { StructuredOutputError } from "../src/structured.mjs";
@@ -595,6 +597,54 @@ test("createHarness convenience starts the harness", async () => {
   const harness = await createHarness({}, deps);
   assert.ok(ref.client);
   await harness.stop();
+});
+
+test("assertUserMessage rejects empty/missing messages, accepts real ones", () => {
+  for (const bad of [undefined, null, "", "   ", "\n\t ", 42, {}]) {
+    assert.throws(() => assertUserMessage(bad), EmptyPromptError);
+  }
+  assert.doesNotThrow(() => assertUserMessage("hi"));
+  // Method name is threaded into the error for a clearer message.
+  assert.throws(() => assertUserMessage("", "structured"), (err) => {
+    assert.ok(err instanceof EmptyPromptError);
+    assert.equal(err.method, "structured");
+    return true;
+  });
+});
+
+test("chat: empty message throws EmptyPromptError without contacting the model", async () => {
+  const { deps, ref } = mockDeps({ script: [{ content: "should not be used" }] });
+  const harness = new CopilotHarness({}, deps);
+
+  for (const bad of [undefined, "", "   "]) {
+    await assert.rejects(() => harness.chat(bad), EmptyPromptError);
+  }
+  // Guard fires before _ensureSession() — so the CLI runtime was never started
+  // and no request was sent: zero tokens spent.
+  assert.equal(ref.client, null);
+  assert.equal(harness.usageSummary().tokens.total, 0);
+});
+
+test("stream: empty message throws EmptyPromptError without contacting the model", async () => {
+  const { deps, ref } = mockDeps({ script: [{ content: "nope" }] });
+  const harness = new CopilotHarness({}, deps);
+
+  await assert.rejects(async () => {
+    // eslint-disable-next-line no-unused-vars
+    for await (const _ of harness.stream("   ")) { /* drain */ }
+  }, EmptyPromptError);
+  assert.equal(ref.client, null);
+});
+
+test("structured: empty task throws EmptyPromptError without contacting the model", async () => {
+  const { deps, ref } = mockDeps({ script: [{ content: "{}" }] });
+  const harness = new CopilotHarness({}, deps);
+
+  await assert.rejects(
+    () => harness.structured("", { type: "object" }),
+    EmptyPromptError,
+  );
+  assert.equal(ref.client, null);
 });
 
 test("renderContextPreamble formats roles and is empty for no messages", () => {

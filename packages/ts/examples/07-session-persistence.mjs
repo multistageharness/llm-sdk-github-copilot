@@ -10,11 +10,14 @@
 //   node examples/07-session-persistence.mjs --continue "What is my favorite number plus one?"
 
 import { createHarness } from '../src/index.mjs';
-import { parseCommonArgs, baseConfig, runExample } from './_shared.mjs';
+import { parseCommonArgs, baseConfig, runExample, requirePrompt } from './_shared.mjs';
 
 const rawArgs = process.argv.slice(2);
 const continueLast = rawArgs.includes('--continue');
 const args = parseCommonArgs(rawArgs.filter((a) => a !== '--continue'));
+
+// No message => print usage and exit before starting the runtime (0 tokens).
+const prompt = requirePrompt(args, 'node examples/07-session-persistence.mjs [--continue] "your message"');
 
 const harness = await createHarness({
   config: baseConfig(args, {
@@ -33,7 +36,6 @@ await runExample(harness, async () => {
     await harness.continueFrom(lastId);
   }
 
-  const prompt = args._[0] ?? 'Remember: my favorite number is 41.';
   const { content, sessionId } = await harness.chat(prompt);
   console.log(content);
   console.error(`\n[session ${sessionId} persisted to ${harness.store.directory}]`);

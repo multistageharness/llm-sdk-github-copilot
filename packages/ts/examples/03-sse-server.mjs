@@ -4,7 +4,9 @@
 //   GET /chat?prompt=...   → text/event-stream of `delta` events + final `message`
 //   GET /usage             → JSON usage summary (tokens, tools, skills)
 //
-// Run:  node examples/03-sse-server.mjs [--cli-path ...] [--proxy ...]
+// Run:
+//   node examples/03-sse-server.mjs [--cli-path ...] [--proxy ...] [--model <id>] [--token-budget <n>] ["default prompt"]
+//   node examples/03-sse-server.mjs --model gpt-5-mini --effort low "What is 2 + 2?"
 // Try:  curl -N 'localhost:3000/chat?prompt=Tell+me+a+short+joke'
 //       curl -s localhost:3000/usage | jq
 
@@ -26,7 +28,10 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (url.pathname === '/chat') {
-    const prompt = url.searchParams.get('prompt') ?? 'What is 2 + 2?';
+    // No built-in default: an empty `?prompt=` (or none) yields an empty message,
+    // which the SDK rejects (EmptyPromptError) — surfaced below as an SSE `error`
+    // event instead of silently answering filler. Pass ?prompt=... to chat.
+    const prompt = url.searchParams.get('prompt') ?? args._[0] ?? '';
     res.writeHead(200, {
       'content-type': 'text/event-stream',
       'cache-control': 'no-cache',

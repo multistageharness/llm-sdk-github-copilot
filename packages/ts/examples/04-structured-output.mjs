@@ -4,12 +4,16 @@
 // reply, validates it locally, and auto-repairs (re-asks with the
 // validation errors) up to `structured.maxRepairAttempts` times.
 //
-// Run: node examples/04-structured-output.mjs [--cli-path ...]
+// Run:
+//   node examples/04-structured-output.mjs [--cli-path ...] [--model <id>] [--token-budget <n>] ["prompt"]
+//   node examples/04-structured-output.mjs --model gpt-5-mini --effort low "Analyze this code snippet."
 
 import { createHarness } from '../src/index.mjs';
-import { parseCommonArgs, baseConfig, runExample } from './_shared.mjs';
+import { parseCommonArgs, baseConfig, runExample, requirePrompt } from './_shared.mjs';
 
 const args = parseCommonArgs();
+// No task message => print usage and exit before starting the runtime (0 tokens).
+const task = requirePrompt(args, 'node examples/04-structured-output.mjs "Analyze this code snippet."');
 const harness = await createHarness({ config: baseConfig(args) });
 
 const SCHEMA = {
@@ -26,7 +30,7 @@ const SCHEMA = {
 
 await runExample(harness, async () => {
   const { value, attempts, usage } = await harness.structured(
-    'Analyze this code snippet.',
+    task,
     SCHEMA,
     {
       input: {
