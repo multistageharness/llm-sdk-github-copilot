@@ -7,16 +7,12 @@
 //
 // This is how you stop an oversized request before it reaches the model.
 //
-// Run:
-//   node examples/06b-token-budget-exceeded.mjs [--cli-path ...] [--model <id>] [--token-budget <n>] ["prompt"]
-//   node examples/06b-token-budget-exceeded.mjs --model gpt-5-mini --effort low
+// Run: node examples/06b-token-budget-exceeded.mjs [--cli-path ...]
 
 import { createHarness, TokenBudgetExceededError } from '../src/index.mjs';
-import { parseCommonArgs, baseConfig, runExample, requirePrompt } from './_shared.mjs';
+import { parseCommonArgs, baseConfig, runExample } from './_shared.mjs';
 
 const args = parseCommonArgs();
-// No message => print usage and exit before starting the runtime (0 tokens).
-const userMessage = requirePrompt(args, 'node examples/06b-token-budget-exceeded.mjs "Summarize this incident log in 3 bullets:"');
 const harness = await createHarness({
   config: baseConfig(args, {
     // Small ceiling. enforcement: 'block' => throw before sending.
@@ -28,10 +24,9 @@ const harness = await createHarness({
 harness.on('budget:exceeded', (b) => console.error(`[budget] EXCEEDED: ${b.used}/${b.maxTokens}`));
 
 await runExample(harness, async () => {
-  // Append a large document to the user's message, guaranteeing the request is
-  // far bigger than the 500-token budget allows.
+  // A large document to summarize — far bigger than a 500-token budget allows.
   const bigDocument = 'The service emitted a 503 error during deploy. '.repeat(400);
-  const prompt = `${userMessage}\n\n${bigDocument}`;
+  const prompt = `Summarize this incident log in 3 bullets:\n\n${bigDocument}`;
 
   // 1. Estimate the cost BEFORE spending anything.
   const analysis = harness.preflight(prompt, { expectedOutputTokens: 150 });

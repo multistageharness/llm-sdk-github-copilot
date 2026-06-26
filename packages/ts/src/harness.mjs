@@ -47,34 +47,6 @@ export function formatSSE({ event, data, id } = {}) {
   return `${lines.join('\n')}\n\n`;
 }
 
-/**
- * Thrown when chat/stream/structured is called without an actual user message.
- * Guards against spending tokens on a request whose only content is built-in
- * scaffolding (context preamble, system prompt, structured-schema wrapper).
- */
-export class EmptyPromptError extends Error {
-  constructor(method = 'chat') {
-    super(
-      `${method}() requires a non-empty user message; ` +
-        'built-in scaffolding alone will not be sent to the model.',
-    );
-    this.name = 'EmptyPromptError';
-    this.method = method;
-  }
-}
-
-/**
- * Reject a missing/empty/whitespace-only user message before any LLM round-trip.
- * Validates the user-provided message only — scaffolding is added afterwards.
- * @param {unknown} message the raw user message
- * @param {string} method the calling method, for the error text
- */
-export function assertUserMessage(message, method = 'chat') {
-  if (typeof message !== 'string' || message.trim() === '') {
-    throw new EmptyPromptError(method);
-  }
-}
-
 /** Render attached conversation history into a prompt preamble. */
 export function renderContextPreamble(messages = []) {
   if (!messages.length) return '';
@@ -507,7 +479,6 @@ export class CopilotHarness extends EventEmitter {
    * @returns {{ content: string, sessionId: string, usage: object, response: object }}
    */
   async chat(prompt, opts = {}) {
-    assertUserMessage(prompt, 'chat');
     await this._ensureSession(opts);
     const finalPrompt = this._composePrompt(prompt, opts);
     const analysis = this.preflight(finalPrompt, { ...opts, context: [] });
@@ -572,7 +543,6 @@ export class CopilotHarness extends EventEmitter {
    * Pipe to an HTTP response with formatSSE() for SSE delivery.
    */
   async *stream(prompt, opts = {}) {
-    assertUserMessage(prompt, 'stream');
     await this._ensureSession({ ...opts, streaming: true });
 
     const queue = [];
@@ -629,7 +599,6 @@ export class CopilotHarness extends EventEmitter {
    * @returns {{ value: any, content: string, attempts: number, usage: object }}
    */
   async structured(task, schema, opts = {}) {
-    assertUserMessage(task, 'structured');
     const maxAttempts = 1 + (this.config.structured?.maxRepairAttempts ?? 2);
     let prompt = buildStructuredPrompt({
       task,

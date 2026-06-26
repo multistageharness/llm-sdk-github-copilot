@@ -21,8 +21,6 @@ export {
   createHarness,
   formatSSE,
   renderContextPreamble,
-  assertUserMessage,
-  EmptyPromptError,
 } from './harness.mjs';
 
 export {

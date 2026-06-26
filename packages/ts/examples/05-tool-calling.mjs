@@ -9,21 +9,12 @@
 // You never call the tools yourself — the model decides when (and with what
 // arguments) to call them, based on each tool's `description` and `parameters`.
 //
-// Run:
-//   node examples/05-tool-calling.mjs [--cli-path ...] [--model <id>] [--token-budget <n>] ["prompt"]
-//   node examples/05-tool-calling.mjs --model gpt-5-mini --effort low "What's the weather in Tokyo and in Cairo?"
+// Run: node examples/05-tool-calling.mjs [--cli-path ...]
 
 import { createHarness } from '../src/index.mjs';
-import { parseCommonArgs, baseConfig, runExample, requirePrompt } from './_shared.mjs';
+import { parseCommonArgs, baseConfig, runExample } from './_shared.mjs';
 
 const args = parseCommonArgs();
-// No message => print usage and exit before starting the runtime (0 tokens).
-// Try a prompt that needs BOTH tools, e.g. the one in the usage hint — awkward
-// numbers nudge the model toward the `add` tool instead of mental math.
-const prompt = requirePrompt(
-  args,
-  `node examples/05-tool-calling.mjs "What's the weather in Tokyo and Cairo? Also total 48217, 19377 and 6655."`,
-);
 const harness = await createHarness({ config: baseConfig(args) });
 
 // --- Tool 1: a lookup. ------------------------------------------------------
@@ -63,7 +54,11 @@ harness.on('tool:call', ({ tool, args: callArgs }) =>
   console.error(`  → model called ${tool}(${JSON.stringify(callArgs)})`));
 
 await runExample(harness, async () => {
-  // The model picks each registered tool on its own based on the prompt.
-  const { content } = await harness.chat(prompt);
+  // One prompt that needs both tools — the model picks each on its own.
+  // (Awkward numbers nudge it toward the `add` tool instead of mental math.)
+  const { content } = await harness.chat(
+    "What's the weather in Tokyo and in Cairo? " +
+    'Also use the add tool to total 48217, 19377 and 6655.',
+  );
   console.log(`\n${content}`);
 });

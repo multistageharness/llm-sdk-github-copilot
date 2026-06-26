@@ -7,16 +7,12 @@
 // Here the budget is generous (50,000 tokens), so a short prompt fits easily.
 // Compare with 06b-token-budget-exceeded.mjs, which uses a tiny budget.
 //
-// Run:
-//   node examples/06a-token-budget-within.mjs [--cli-path ...] [--model <id>] [--token-budget <n>] ["prompt"]
-//   node examples/06a-token-budget-within.mjs --model gpt-5-mini --effort low "Summarize the SRE golden signals in 3 bullets."
+// Run: node examples/06a-token-budget-within.mjs [--cli-path ...]
 
 import { createHarness } from '../src/index.mjs';
-import { parseCommonArgs, baseConfig, runExample, requirePrompt } from './_shared.mjs';
+import { parseCommonArgs, baseConfig, runExample } from './_shared.mjs';
 
 const args = parseCommonArgs();
-// No message => print usage and exit before starting the runtime (0 tokens).
-const prompt = requirePrompt(args, 'node examples/06a-token-budget-within.mjs "Summarize the SRE golden signals in 3 bullets."');
 const harness = await createHarness({
   config: baseConfig(args, {
     // Plenty of room — a short prompt + reply is nowhere near 50k tokens.
@@ -27,6 +23,8 @@ const harness = await createHarness({
 harness.on('budget:warn', (b) => console.error(`[budget] warning at ${b.utilizationPercent}%`));
 
 await runExample(harness, async () => {
+  const prompt = 'Summarize the SRE golden signals in 3 bullets.';
+
   // 1. Estimate the cost BEFORE spending anything.
   const analysis = harness.preflight(prompt, { expectedOutputTokens: 150 });
   console.log(`estimated ~${analysis.estimatedTotalTokens} tokens, ` +

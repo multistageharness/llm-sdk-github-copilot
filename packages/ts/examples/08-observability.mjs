@@ -11,16 +11,12 @@
 // Without an OTel SDK installed this still runs: harness metrics no-op and
 // the usage tracker provides the same numbers in-process.
 //
-// Run:
-//   node examples/08-observability.mjs [--cli-path ...] [--model <id>] [--token-budget <n>] ["prompt"]
-//   node examples/08-observability.mjs --model gpt-5-mini --effort low "Why do SREs track time-to-first-token for LLM services?"
+// Run: node examples/08-observability.mjs [--cli-path ...]
 
 import { createHarness } from '../src/index.mjs';
-import { parseCommonArgs, baseConfig, runExample, requirePrompt } from './_shared.mjs';
+import { parseCommonArgs, baseConfig, runExample } from './_shared.mjs';
 
 const args = parseCommonArgs();
-// No message => print usage and exit before starting the runtime (0 tokens).
-const prompt = requirePrompt(args, 'node examples/08-observability.mjs "Why do SREs track time-to-first-token?"');
 const harness = await createHarness({
   config: baseConfig(args, {
     observability: {
@@ -39,7 +35,9 @@ harness.on('usage:provider:error', (r) => console.error(`[signal] provider error
 harness.on('usage:context', (r) => console.error(`[signal] context ${r.currentTokens}/${r.tokenLimit}`));
 
 await runExample(harness, async () => {
-  const { content, usage } = await harness.chat(prompt);
+  const { content, usage } = await harness.chat(
+    'In two sentences: why do SREs track time-to-first-token for LLM services?',
+  );
   console.log(content);
 
   const s = harness.usageSummary();

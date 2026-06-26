@@ -4,16 +4,12 @@
 // fire-and-forget notifications. This example wires both ends to stderr so
 // you can watch a full run's lifecycle.
 //
-// Run:
-//   node examples/09-hooks-and-events.mjs [--cli-path ...] [--model <id>] [--token-budget <n>] ["prompt"]
-//   node examples/09-hooks-and-events.mjs --model gpt-5-mini --effort low "Name one classic SRE golden signal."
+// Run: node examples/09-hooks-and-events.mjs [--cli-path ...]
 
 import { createHarness } from '../src/index.mjs';
-import { parseCommonArgs, baseConfig, runExample, requirePrompt } from './_shared.mjs';
+import { parseCommonArgs, baseConfig, runExample } from './_shared.mjs';
 
 const args = parseCommonArgs();
-// No message => print usage and exit before starting the runtime (0 tokens).
-const prompt = requirePrompt(args, 'node examples/09-hooks-and-events.mjs "Name one classic SRE golden signal."');
 const log = (tag) => (payload) => console.error(`[${tag}]`, JSON.stringify(payload).slice(0, 120));
 
 const harness = await createHarness({
@@ -38,7 +34,7 @@ for (const evt of ['session:created', 'run:start', 'run:end', 'delta', 'idle',
 }
 
 await runExample(harness, async () => {
-  const { content } = await harness.chat(prompt);
+  const { content } = await harness.chat('Name one classic SRE golden signal.');
   console.log(`\n${content}`);
 
   // Demonstrate a hook veto:
