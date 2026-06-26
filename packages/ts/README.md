@@ -198,10 +198,17 @@ handlers fire for built-in tools too.
 
 ## Examples
 
-Nine runnable examples under [`examples/`](examples/README.md) cover chat,
+Twenty-four runnable examples under [`examples/`](examples/README.md) cover chat,
 streaming, an SSE HTTP server, structured output, tool calling with policy
 denial, token budgets, session persistence, observability, and the
-hook/event lifecycle. All accept `--cli-path` and `--proxy`.
+hook/event lifecycle — plus system-prompt shaping, multi-turn context,
+resume/replay, RAG grounding, LLM-as-judge, batch classification,
+streaming-with-tools, human-in-the-loop approval, PII redaction,
+retry/fallback resilience, cost reporting, built-in MCPs, an interactive REPL,
+and an enterprise proxy/headless-auth setup. See the
+[catalog](examples/README.md) for the full table (examples 13, 14, and 22 are
+demo-grade — they require a live, authenticated Copilot CLI). All accept
+`--cli-path` and `--proxy`.
 
 ## Testing
 

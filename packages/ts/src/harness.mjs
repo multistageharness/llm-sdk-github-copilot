@@ -47,6 +47,34 @@ export function formatSSE({ event, data, id } = {}) {
   return `${lines.join('\n')}\n\n`;
 }
 
+/**
+ * Thrown when chat/stream/structured is called without an actual user message.
+ * Guards against spending tokens on a request whose only content is built-in
+ * scaffolding (context preamble, system prompt, structured-schema wrapper).
+ */
+export class EmptyPromptError extends Error {
+  constructor(method = 'chat') {
+    super(
+      `${method}() requires a non-empty user message; ` +
+        'built-in scaffolding alone will not be sent to the model.',
+    );
+    this.name = 'EmptyPromptError';
+    this.method = method;
+  }
+}
+
+/**
+ * Reject a missing/empty/whitespace-only user message before any LLM round-trip.
+ * Validates the user-provided message only — scaffolding is added afterwards.
+ * @param {unknown} message the raw user message
+ * @param {string} method the calling method, for the error text
+ */
+export function assertUserMessage(message, method = 'chat') {
+  if (typeof message !== 'string' || message.trim() === '') {
+    throw new EmptyPromptError(method);
+  }
+}
+
 /** Render attached conversation history into a prompt preamble. */
 export function renderContextPreamble(messages = []) {
   if (!messages.length) return '';
@@ -60,6 +88,28 @@ export function renderContextPreamble(messages = []) {
     '</conversation-context>',
     '',
   ].join('\n');
+}
+
+/**
+ * Resolve the user-facing answer from the assistant messages observed during a
+ * run. Thinking ("phased-output") models emit `phase: "thinking"` messages
+ * alongside the real `phase: "response"` one, and reasoning can trail the
+ * answer in the event stream — so the last assistant.message is not reliably
+ * the answer. Prefer the last non-thinking message that has content; fall back
+ * to the last message, then to the raw SDK response.
+ *
+ * @param {Array<{content: string, phase?: string}>} messages collected messages
+ * @param {object} [fallback] the raw response.data from sendAndWait
+ * @returns {string} the answer content
+ */
+export function resolveAnswerContent(messages = [], fallback = undefined) {
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    const m = messages[i];
+    if (m.phase !== 'thinking' && m.content) return m.content;
+  }
+  const last = messages[messages.length - 1];
+  if (last) return last.content ?? '';
+  return fallback?.content ?? '';
 }
 
 export class CopilotHarness extends EventEmitter {
@@ -92,6 +142,11 @@ export class CopilotHarness extends EventEmitter {
     this._tools = [];
     this._pendingContext = [];
     this._started = false;
+    // Per-run collector for assistant messages + reasoning. Thinking models
+    // emit phased messages (phase: "thinking" vs "response") and a separate
+    // reasoning channel; we capture them here so chat() can resolve the answer
+    // rather than trusting whichever assistant.message happened to arrive last.
+    this._run = null;
   }
 
   /* ------------------------------------------------------------ *
@@ -262,7 +317,21 @@ export class CopilotHarness extends EventEmitter {
         event,
       });
     } else if (event.type === 'assistant.message') {
-      this.emit('message', { content: event.data?.content ?? '', event });
+      const data = event.data ?? {};
+      this._run?.messages.push({
+        content: data.content ?? '',
+        phase: data.phase,
+        reasoningText: data.reasoningText,
+      });
+      if (data.reasoningText) this._run?.reasoning.push(data.reasoningText);
+      this.emit('message', { content: data.content ?? '', event });
+    } else if (event.type === 'assistant.reasoning') {
+      // Extended thinking: capture for the result, never as answer content.
+      // The live Copilot SDK carries the thinking text on `data.content`
+      // (AssistantReasoningData.content). Fall back to `data.text` for any
+      // older/alternate shape so we never silently drop the reasoning channel.
+      const text = event.data?.content ?? event.data?.text;
+      if (text) this._run?.reasoning.push(text);
     } else if (event.type === 'session.idle') {
       this.emit('idle', { event });
     }
@@ -476,9 +545,18 @@ export class CopilotHarness extends EventEmitter {
 
   /**
    * Send a prompt and await the complete response.
-   * @returns {{ content: string, sessionId: string, usage: object, response: object }}
+   *
+   * @returns {{
+   *   content: string,                         user-facing answer (never the chain-of-thought)
+   *   reasoning: string|null,                  joined extended-thinking text, or null
+   *   thinking: {text: string, steps: string[]}|null,  structured thinking: joined text + ordered blocks
+   *   sessionId: string,
+   *   usage: object,
+   *   response: object                         raw Copilot SDK sendAndWait result (the live `$response`)
+   * }}
    */
   async chat(prompt, opts = {}) {
+    assertUserMessage(prompt, 'chat');
     await this._ensureSession(opts);
     const finalPrompt = this._composePrompt(prompt, opts);
     const analysis = this.preflight(finalPrompt, { ...opts, context: [] });
@@ -489,6 +567,10 @@ export class CopilotHarness extends EventEmitter {
     this.obs.recordRequestStart({ model: this.config.model });
     this.emit('run:start', { prompt: finalPrompt, sessionId: this.sessionId });
     const startedAt = Date.now();
+    // Collect assistant messages + reasoning emitted during this run so the
+    // answer is resolved phase-aware (see resolveAnswerContent), not by
+    // trusting whichever assistant.message sendAndWait returned last.
+    this._run = { messages: [], reasoning: [] };
 
     try {
       const response = await this.obs.withSpan(
@@ -502,7 +584,15 @@ export class CopilotHarness extends EventEmitter {
           opts.timeout ?? this.config.requestTimeoutMs,
         ),
       );
-      const content = response?.data?.content ?? '';
+      const content = resolveAnswerContent(this._run.messages, response?.data);
+      const reasoningSteps = [...this._run.reasoning];
+      const reasoning = reasoningSteps.length ? reasoningSteps.join('\n\n') : null;
+      // Structured view of the model's extended thinking: the joined `text`
+      // plus the ordered reasoning blocks (`steps`). null when the turn emitted
+      // no reasoning (non-thinking model, or reasoning effort produced none).
+      const thinking = reasoningSteps.length
+        ? { text: reasoning, steps: reasoningSteps }
+        : null;
       const after = this.usage.summary().tokens;
       const runUsage = {
         inputTokens: after.input - before.input,
@@ -518,7 +608,7 @@ export class CopilotHarness extends EventEmitter {
         meta: { model: this.config.model },
       });
 
-      const result = { content, sessionId: this.sessionId, usage: runUsage, response };
+      const result = { content, reasoning, thinking, sessionId: this.sessionId, usage: runUsage, response };
       await this.hooks.run('afterRun', {
         prompt: finalPrompt,
         response: content,
@@ -532,6 +622,8 @@ export class CopilotHarness extends EventEmitter {
       await this.hooks.run('onError', { error, phase: 'chat', sessionId: this.sessionId });
       this.emit('error:run', { error, prompt: finalPrompt });
       throw error;
+    } finally {
+      this._run = null;
     }
   }
 
@@ -543,6 +635,7 @@ export class CopilotHarness extends EventEmitter {
    * Pipe to an HTTP response with formatSSE() for SSE delivery.
    */
   async *stream(prompt, opts = {}) {
+    assertUserMessage(prompt, 'stream');
     await this._ensureSession({ ...opts, streaming: true });
 
     const queue = [];
@@ -599,6 +692,7 @@ export class CopilotHarness extends EventEmitter {
    * @returns {{ value: any, content: string, attempts: number, usage: object }}
    */
   async structured(task, schema, opts = {}) {
+    assertUserMessage(task, 'structured');
     const maxAttempts = 1 + (this.config.structured?.maxRepairAttempts ?? 2);
     let prompt = buildStructuredPrompt({
       task,

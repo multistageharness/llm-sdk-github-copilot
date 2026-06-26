@@ -6,6 +6,20 @@
  * A "script" drives responses: an array of steps (or a function of the
  * prompt) where each step is
  *   { content, inputTokens?, outputTokens?, events?: SessionEvent[] }
+ *
+ * Thinking / reasoning ("phased-output") models are simulated with:
+ *   - reasoning: string | string[]
+ *       Emits `assistant.reasoning` events (and `assistant.reasoning_delta`
+ *       chunks when streaming) carrying the model's extended thinking. This
+ *       is the model's private chain-of-thought, NOT the user-facing answer.
+ *   - reasoningTokens: number   → reported on the `assistant.usage` event.
+ *   - reasoningText / phase     → attached to the `assistant.message.data`,
+ *       mirroring the real SDK fields for Anthropic thinking models.
+ *   - messages: Array<{ content, phase?, reasoningText? }>
+ *       Emits MULTIPLE `assistant.message` events in order so a phased model
+ *       (thinking-phase message, then response-phase message — or a trailing
+ *       reasoning message that lands *after* the answer) can be reproduced.
+ *       `sendAndWait` returns the LAST one, exactly like the real SDK.
  */
 
 let eventCounter = 0;
@@ -62,6 +76,16 @@ export class MockSession {
     return this.script ?? { content: 'ok' };
   }
 
+  _streamChunks(type, text, extraData = {}) {
+    const chunkSize = Math.max(1, Math.ceil(text.length / 3));
+    for (let i = 0; i < text.length; i += chunkSize) {
+      this.emitEvent(type, {
+        deltaContent: text.slice(i, i + chunkSize),
+        ...extraData,
+      }, { ephemeral: true });
+    }
+  }
+
   async sendAndWait(opts, _timeout) {
     const prompt = typeof opts === 'string' ? opts : opts.prompt;
     this.sent.push({ prompt, opts });
@@ -71,26 +95,56 @@ export class MockSession {
       this.emitEvent(ev.type, ev.data, ev.extra);
     }
 
-    if (this.config.streaming) {
-      const chunkSize = Math.max(1, Math.ceil(step.content.length / 3));
-      for (let i = 0; i < step.content.length; i += chunkSize) {
-        this.emitEvent('assistant.message_delta', {
-          deltaContent: step.content.slice(i, i + chunkSize),
-        }, { ephemeral: true });
+    // Extended thinking: emit reasoning *before* the answer, on its own event
+    // channel (assistant.reasoning / assistant.reasoning_delta), never as the
+    // assistant message content. This is what a thinking model like Opus does.
+    const reasoningBlocks = step.reasoning == null
+      ? []
+      : Array.isArray(step.reasoning) ? step.reasoning : [step.reasoning];
+    reasoningBlocks.forEach((text, i) => {
+      const reasoningId = `reasoning-${i + 1}`;
+      if (this.config.streaming) {
+        this._streamChunks('assistant.reasoning_delta', text, { reasoningId });
       }
-    }
+      // Real SDK shape: AssistantReasoningData carries the thinking text on
+      // `content` (not `text`). Pin that here so the harness must read the
+      // field the live Copilot runtime actually emits.
+      this.emitEvent('assistant.reasoning', { content: text, reasoningId });
+    });
 
     this.emitEvent('assistant.usage', {
       model: this.config.model ?? 'mock-model',
       inputTokens: step.inputTokens ?? 10,
       outputTokens: step.outputTokens ?? 5,
+      reasoningTokens: step.reasoningTokens ?? 0,
       duration: step.duration ?? 42,
       timeToFirstTokenMs: step.ttft ?? 7,
     }, { ephemeral: true });
 
-    const message = this.emitEvent('assistant.message', { content: step.content });
+    // A phased model can emit several assistant.message events (thinking phase,
+    // response phase, or a reasoning message trailing *after* the answer). The
+    // real sendAndWait keeps the LAST one regardless of phase.
+    const messages = step.messages ?? [
+      { content: step.content, phase: step.phase, reasoningText: step.reasoningText },
+    ];
+    let last;
+    for (const m of messages) {
+      const isThinking = m.phase === 'thinking';
+      if (this.config.streaming && m.content) {
+        // Thinking-phase text streams on the reasoning channel; only the
+        // response phase streams on the user-facing message channel.
+        this._streamChunks(
+          isThinking ? 'assistant.reasoning_delta' : 'assistant.message_delta',
+          m.content,
+        );
+      }
+      const data = { content: m.content ?? '' };
+      if (m.phase != null) data.phase = m.phase;
+      if (m.reasoningText != null) data.reasoningText = m.reasoningText;
+      last = this.emitEvent('assistant.message', data);
+    }
     this.emitEvent('session.idle', {});
-    return message;
+    return last;
   }
 
   async disconnect() {
