@@ -1,0 +1,7 @@
+node_modules/
+.env
+.env.testdata
+*.log
+.copilot-harness/
+coverage/
+.DS_Store
