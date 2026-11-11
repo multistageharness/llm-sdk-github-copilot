@@ -1,0 +1,1868 @@
+{
+  "commit": "cbcdcf7",
+  "enrichment": {
+    "configKeysReadButNotDefaulted": [
+      "agentName",
+      "maxTokens (top-level, set by LLM_SDK_MAX_TOKENS; not read elsewhere)",
+      "observability.providerName",
+      "observability.sourceName",
+      "pathToClaudeCodeExecutable (runtime alias)"
+    ],
+    "configPrecedence": [
+      "defaultConfig(env)",
+      "loadConfigFile(configFile)",
+      "configFromEnv(env)",
+      "overrides",
+      "proxy resolution (httpProxy unset && proxyFromEnv)"
+    ],
+    "dynamicEvents": [
+      {
+        "kinds": [
+          "context",
+          "provider:error",
+          "session:error",
+          "skill",
+          "tokens",
+          "tool:end",
+          "tool:start"
+        ],
+        "pattern": "usage:${record.kind}"
+      }
+    ],
+    "hooks": [
+      {
+        "canVeto": false,
+        "errorSemantics": "swallowed",
+        "name": "afterRun"
+      },
+      {
+        "canVeto": false,
+        "errorSemantics": "swallowed",
+        "name": "afterToolCall"
+      },
+      {
+        "canVeto": true,
+        "errorSemantics": "propagates",
+        "name": "beforeRun"
+      },
+      {
+        "canVeto": true,
+        "errorSemantics": "propagates",
+        "name": "beforeToolCall",
+        "verdict": "{ deny, reason }"
+      },
+      {
+        "canVeto": false,
+        "errorSemantics": "swallowed",
+        "name": "onBudgetExceeded"
+      },
+      {
+        "canVeto": false,
+        "errorSemantics": "swallowed",
+        "name": "onBudgetWarning"
+      },
+      {
+        "canVeto": false,
+        "errorSemantics": "swallowed",
+        "name": "onError"
+      },
+      {
+        "canVeto": false,
+        "errorSemantics": "swallowed",
+        "name": "onPromptSubmit"
+      },
+      {
+        "canVeto": false,
+        "errorSemantics": "swallowed",
+        "name": "onSessionEnd"
+      },
+      {
+        "canVeto": false,
+        "errorSemantics": "swallowed",
+        "name": "onSessionStart"
+      },
+      {
+        "canVeto": false,
+        "errorSemantics": "swallowed",
+        "name": "onToolFailure"
+      }
+    ],
+    "method": "manual static read of src/*.mjs to fill categories the regex/AST pass does not resolve",
+    "unexposedModuleExports": [
+      {
+        "file": "src/harness.mjs",
+        "name": "normalizeToolName",
+        "note": "exported from harness.mjs, which has no subpath export and is not re-exported by the root barrel"
+      }
+    ],
+    "upstream": {
+      "@github/copilot-sdk": {
+        "eventsConsumed": [
+          "assistant.message",
+          "assistant.message_delta",
+          "assistant.reasoning",
+          "assistant.usage",
+          "model.call_failure",
+          "session.error",
+          "session.idle",
+          "session.usage_info",
+          "skill.invoked",
+          "tool.execution_complete",
+          "tool.execution_start"
+        ],
+        "hooksBridged": [
+          "onErrorOccurred",
+          "onPostToolUse",
+          "onPostToolUseFailure",
+          "onPreToolUse",
+          "onSessionEnd",
+          "onSessionStart",
+          "onUserPromptSubmitted"
+        ],
+        "primitives": [
+          "CopilotClient",
+          "RuntimeConnection.forStdio",
+          "client.createSession",
+          "client.resumeSession",
+          "client.stop",
+          "session.sendAndWait",
+          "session.on",
+          "session.disconnect",
+          "session.sessionId"
+        ],
+        "range": "^1.0.28"
+      },
+      "@opentelemetry/api": {
+        "apis": [
+          "context.active",
+          "context.with",
+          "metrics.getMeter",
+          "propagation.inject",
+          "SpanKind",
+          "SpanStatusCode",
+          "trace.getTracer",
+          "trace.setSpan"
+        ],
+        "instruments": [
+          "copilot_harness.budget.utilization (observable gauge)",
+          "copilot_harness.context_window.utilization (observable gauge)",
+          "copilot_harness.errors (counter)",
+          "copilot_harness.request.duration_ms (histogram)",
+          "copilot_harness.request.ttft_ms (histogram)",
+          "copilot_harness.requests (counter)",
+          "copilot_harness.tokens (counter)",
+          "copilot_harness.tool.calls (counter)",
+          "copilot_harness.tool.duration_ms (histogram)"
+        ],
+        "optional": true,
+        "range": ">=1.7.0"
+      }
+    }
+  },
+  "exportsBySubpath": {
+    ".": [
+      {
+        "inRootBarrel": true,
+        "kind": "class",
+        "name": "ConfigError",
+        "source": "./config.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "class",
+        "name": "ContextStore",
+        "source": "./store.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "class",
+        "name": "CopilotHarness",
+        "source": "./harness.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "constant",
+        "name": "DEFAULT_CANDIDATES",
+        "source": "./cli-path.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "class",
+        "name": "EmptyPromptError",
+        "source": "./harness.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "constant",
+        "name": "HOOK_NAMES",
+        "source": "./hooks.mjs"
+      },
+      {
+        "aliasOf": "CopilotHarness",
+        "inRootBarrel": true,
+        "kind": "class",
+        "name": "Harness",
+        "source": "./harness.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "class",
+        "name": "HookManager",
+        "source": "./hooks.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "class",
+        "name": "Observability",
+        "source": "./observability.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "constant",
+        "name": "REASONING_EFFORTS",
+        "source": "./config.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "class",
+        "name": "StructuredOutputError",
+        "source": "./structured.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "constant",
+        "name": "THINKING_TYPES",
+        "source": "./config.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "class",
+        "name": "TokenBudget",
+        "source": "./tokens.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "class",
+        "name": "TokenBudgetExceededError",
+        "source": "./tokens.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "class",
+        "name": "UsageTracker",
+        "source": "./usage.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "analyzeRun",
+        "source": "./tokens.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "analyzeRunAccurate",
+        "source": "./tokens.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "assertUserMessage",
+        "source": "./harness.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "buildRepairPrompt",
+        "source": "./structured.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "buildStructuredPrompt",
+        "source": "./structured.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "configFromEnv",
+        "source": "./config.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "createHarness",
+        "source": "./harness.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "defaultConfig",
+        "source": "./config.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "estimateMessagesTokens",
+        "source": "./tokens.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "estimateTokens",
+        "source": "./tokens.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "extractContent",
+        "source": "./harness.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "extractJson",
+        "source": "./structured.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "findClosestModuleDir",
+        "source": "./cli-path.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "findCopilot",
+        "source": "./cli-path.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "formatSSE",
+        "source": "./harness.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "loadConfig",
+        "source": "./config.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "loadConfigFile",
+        "source": "./config.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "loadOtelApi",
+        "source": "./observability.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "mergeConfig",
+        "source": "./config.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "parseStructuredResponse",
+        "source": "./structured.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "renderContextPreamble",
+        "source": "./harness.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "renderStructuredInput",
+        "source": "./structured.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "resolveAnswerContent",
+        "source": "./harness.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "resolveCliPath",
+        "source": "./cli-path.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "resolveModuleEntry",
+        "source": "./cli-path.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "resolveSystemPrompt",
+        "source": "./config.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "telemetryConfigFor",
+        "source": "./observability.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "validateConfig",
+        "source": "./config.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "validateSchema",
+        "source": "./structured.mjs"
+      }
+    ],
+    "./cli-path": [
+      {
+        "inRootBarrel": true,
+        "kind": "constant",
+        "name": "DEFAULT_CANDIDATES"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "findClosestModuleDir"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "findCopilot"
+      },
+      {
+        "inRootBarrel": false,
+        "kind": "function",
+        "name": "packageRootFromEntry"
+      },
+      {
+        "inRootBarrel": false,
+        "kind": "function",
+        "name": "readManifestEntry"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "resolveCliPath"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "resolveModuleEntry"
+      }
+    ],
+    "./config": [
+      {
+        "inRootBarrel": true,
+        "kind": "class",
+        "name": "ConfigError"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "constant",
+        "name": "REASONING_EFFORTS"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "constant",
+        "name": "THINKING_TYPES"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "configFromEnv"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "defaultConfig"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "loadConfig"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "loadConfigFile"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "mergeConfig"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "resolveSystemPrompt"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "validateConfig"
+      }
+    ],
+    "./hooks": [
+      {
+        "inRootBarrel": true,
+        "kind": "constant",
+        "name": "HOOK_NAMES"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "class",
+        "name": "HookManager"
+      }
+    ],
+    "./observability": [
+      {
+        "inRootBarrel": true,
+        "kind": "class",
+        "name": "Observability"
+      },
+      {
+        "inRootBarrel": false,
+        "kind": "function",
+        "name": "_setOtelApiForTests"
+      },
+      {
+        "inRootBarrel": false,
+        "kind": "function",
+        "name": "genAiAttributes"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "loadOtelApi"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "telemetryConfigFor"
+      }
+    ],
+    "./runtime": [
+      {
+        "inRootBarrel": true,
+        "kind": "constant",
+        "name": "DEFAULT_CANDIDATES",
+        "reExportedFrom": "./cli-path.mjs"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "findClosestModuleDir",
+        "reExportedFrom": "./cli-path.mjs"
+      },
+      {
+        "inRootBarrel": false,
+        "kind": "function",
+        "name": "packageRootFromEntry",
+        "reExportedFrom": "./cli-path.mjs"
+      },
+      {
+        "inRootBarrel": false,
+        "kind": "function",
+        "name": "readManifestEntry",
+        "reExportedFrom": "./cli-path.mjs"
+      },
+      {
+        "inRootBarrel": false,
+        "kind": "function",
+        "name": "resolveExecutablePath"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "resolveModuleEntry",
+        "reExportedFrom": "./cli-path.mjs"
+      }
+    ],
+    "./store": [
+      {
+        "inRootBarrel": true,
+        "kind": "class",
+        "name": "ContextStore"
+      }
+    ],
+    "./structured": [
+      {
+        "inRootBarrel": true,
+        "kind": "class",
+        "name": "StructuredOutputError"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "buildRepairPrompt"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "buildStructuredPrompt"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "extractJson"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "parseStructuredResponse"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "renderStructuredInput"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "validateSchema"
+      }
+    ],
+    "./tokens": [
+      {
+        "inRootBarrel": true,
+        "kind": "class",
+        "name": "TokenBudget"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "class",
+        "name": "TokenBudgetExceededError"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "analyzeRun"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "analyzeRunAccurate"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "estimateMessagesTokens"
+      },
+      {
+        "inRootBarrel": true,
+        "kind": "function",
+        "name": "estimateTokens"
+      }
+    ],
+    "./usage": [
+      {
+        "inRootBarrel": true,
+        "kind": "class",
+        "name": "UsageTracker"
+      }
+    ]
+  },
+  "generatedAt": "2026-11-11T15:03:57.177863+00:00",
+  "method": "deterministic static AST & manifest analysis (zero SDK/network execution)",
+  "modules": {
+    "src/cli-path.mjs": {
+      "classes": [],
+      "constants": [
+        "DEFAULT_CANDIDATES"
+      ],
+      "emittedEvents": [],
+      "envVars": [
+        "COPILOT_CLI_PATH"
+      ],
+      "errors": [],
+      "exports": [
+        {
+          "kind": "constant",
+          "name": "DEFAULT_CANDIDATES"
+        },
+        {
+          "kind": "function",
+          "name": "findClosestModuleDir"
+        },
+        {
+          "kind": "function",
+          "name": "findCopilot"
+        },
+        {
+          "kind": "function",
+          "name": "packageRootFromEntry"
+        },
+        {
+          "kind": "function",
+          "name": "readManifestEntry"
+        },
+        {
+          "kind": "function",
+          "name": "resolveCliPath"
+        },
+        {
+          "kind": "function",
+          "name": "resolveModuleEntry"
+        }
+      ],
+      "file": "src/cli-path.mjs",
+      "functions": [
+        {
+          "async": false,
+          "exported": false,
+          "generator": false,
+          "name": "isDir",
+          "signature": "isDir(p)"
+        },
+        {
+          "async": false,
+          "exported": false,
+          "generator": false,
+          "name": "isFile",
+          "signature": "isFile(p)"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "readManifestEntry",
+          "signature": "readManifestEntry(dir)"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "resolveModuleEntry",
+          "signature": "resolveModuleEntry(moduleName, opts = {})"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "packageRootFromEntry",
+          "signature": "packageRootFromEntry(moduleName, entry, opts = {})"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "findClosestModuleDir",
+          "signature": "findClosestModuleDir(moduleName, opts = {})"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "findCopilot",
+          "signature": "findCopilot(opts = {})"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "resolveCliPath",
+          "signature": "resolveCliPath(opts = {})"
+        }
+      ],
+      "imports": [
+        {
+          "source": "node:fs",
+          "specifiers": [
+            "fs"
+          ]
+        },
+        {
+          "source": "node:path",
+          "specifiers": [
+            "path"
+          ]
+        },
+        {
+          "source": "node:module",
+          "specifiers": [
+            "createRequire"
+          ]
+        },
+        {
+          "source": "node:url",
+          "specifiers": [
+            "fileURLToPath"
+          ]
+        }
+      ],
+      "reExports": [],
+      "shapes": []
+    },
+    "src/config.mjs": {
+      "classes": [
+        {
+          "exported": true,
+          "extends": "Error",
+          "name": "ConfigError"
+        }
+      ],
+      "constants": [
+        "REASONING_EFFORTS",
+        "THINKING_TYPES"
+      ],
+      "emittedEvents": [],
+      "envVars": [
+        "COPILOT_CLI_MODEL",
+        "COPILOT_CLI_PATH",
+        "COPILOT_CLI_PROXY",
+        "COPILOT_CLI_REASON_EFFORT",
+        "COPILOT_HARNESS_STORE_DIR",
+        "COPILOT_MODEL",
+        "COPILOT_REASONING_EFFORT",
+        "COPILOT_SYSTEM_PROMPT_FILE",
+        "COPILOT_TOKEN_BUDGET",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LLM_SDK_MAX_TOKENS",
+        "LLM_SDK_MODEL",
+        "LLM_SDK_REASONING_EFFORT",
+        "LLM_SDK_STORE_DIR",
+        "LLM_SDK_SYSTEM_PROMPT_FILE",
+        "LLM_SDK_TOKEN_BUDGET",
+        "OTEL_EXPORTER_OTLP_ENDPOINT"
+      ],
+      "errors": [
+        "ConfigError"
+      ],
+      "exports": [
+        {
+          "kind": "class",
+          "name": "ConfigError"
+        },
+        {
+          "kind": "constant",
+          "name": "REASONING_EFFORTS"
+        },
+        {
+          "kind": "constant",
+          "name": "THINKING_TYPES"
+        },
+        {
+          "kind": "function",
+          "name": "configFromEnv"
+        },
+        {
+          "kind": "function",
+          "name": "defaultConfig"
+        },
+        {
+          "kind": "function",
+          "name": "loadConfig"
+        },
+        {
+          "kind": "function",
+          "name": "loadConfigFile"
+        },
+        {
+          "kind": "function",
+          "name": "mergeConfig"
+        },
+        {
+          "kind": "function",
+          "name": "resolveSystemPrompt"
+        },
+        {
+          "kind": "function",
+          "name": "validateConfig"
+        }
+      ],
+      "file": "src/config.mjs",
+      "functions": [
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "defaultConfig",
+          "signature": "defaultConfig(env = process.env)"
+        },
+        {
+          "async": false,
+          "exported": false,
+          "generator": false,
+          "name": "isPlainObject",
+          "signature": "isPlainObject(v)"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "mergeConfig",
+          "signature": "mergeConfig(base, ...layers)"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "configFromEnv",
+          "signature": "configFromEnv(env = process.env)"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "loadConfigFile",
+          "signature": "loadConfigFile(file)"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "validateConfig",
+          "signature": "validateConfig(config)"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "loadConfig",
+          "signature": "loadConfig(opts = {})"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "resolveSystemPrompt",
+          "signature": "resolveSystemPrompt(config)"
+        }
+      ],
+      "imports": [
+        {
+          "source": "node:fs",
+          "specifiers": [
+            "fs"
+          ]
+        },
+        {
+          "source": "node:path",
+          "specifiers": [
+            "path"
+          ]
+        }
+      ],
+      "reExports": [],
+      "shapes": []
+    },
+    "src/harness.mjs": {
+      "classes": [
+        {
+          "exported": true,
+          "extends": "Error",
+          "name": "EmptyPromptError"
+        },
+        {
+          "exported": true,
+          "extends": "EventEmitter",
+          "name": "CopilotHarness"
+        }
+      ],
+      "constants": [],
+      "emittedEvents": [
+        "budget:exceeded",
+        "budget:warn",
+        "delta",
+        "error:run",
+        "event",
+        "idle",
+        "message",
+        "preflight",
+        "run:end",
+        "run:start",
+        "session:created",
+        "session:replayed",
+        "session:resumed",
+        "started",
+        "stopped",
+        "structured:invalid",
+        "structured:ok",
+        "tool:call",
+        "tool:denied",
+        "tool:error",
+        "tool:result",
+        "tool:start"
+      ],
+      "envVars": [
+        "HTTPS_PROXY",
+        "HTTP_PROXY"
+      ],
+      "errors": [
+        "EmptyPromptError"
+      ],
+      "exports": [
+        {
+          "kind": "class",
+          "name": "CopilotHarness"
+        },
+        {
+          "kind": "class",
+          "name": "EmptyPromptError"
+        },
+        {
+          "kind": "function",
+          "name": "assertUserMessage"
+        },
+        {
+          "kind": "function",
+          "name": "createHarness"
+        },
+        {
+          "kind": "function",
+          "name": "extractContent"
+        },
+        {
+          "kind": "function",
+          "name": "formatSSE"
+        },
+        {
+          "kind": "function",
+          "name": "normalizeToolName"
+        },
+        {
+          "kind": "function",
+          "name": "renderContextPreamble"
+        },
+        {
+          "kind": "function",
+          "name": "resolveAnswerContent"
+        }
+      ],
+      "file": "src/harness.mjs",
+      "functions": [
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "formatSSE",
+          "signature": "formatSSE({ event, data, id } = {})"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "assertUserMessage",
+          "signature": "assertUserMessage(message, method = 'chat')"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "normalizeToolName",
+          "signature": "normalizeToolName(name)"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "renderContextPreamble",
+          "signature": "renderContextPreamble(messages = [])"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "extractContent",
+          "signature": "extractContent(content = [])"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "resolveAnswerContent",
+          "signature": "resolveAnswerContent(messages = [], fallback = undefined)"
+        },
+        {
+          "async": true,
+          "exported": true,
+          "generator": false,
+          "name": "createHarness",
+          "signature": "createHarness(options = {}, deps = {})"
+        }
+      ],
+      "imports": [
+        {
+          "source": "node:events",
+          "specifiers": [
+            "EventEmitter"
+          ]
+        },
+        {
+          "source": "./config.mjs",
+          "specifiers": [
+            "loadConfig",
+            "resolveSystemPrompt"
+          ]
+        },
+        {
+          "source": "./cli-path.mjs",
+          "specifiers": [
+            "resolveCliPath"
+          ]
+        },
+        {
+          "source": "./tokens.mjs",
+          "specifiers": [
+            "TokenBudget",
+            "analyzeRun",
+            "estimateTokens"
+          ]
+        },
+        {
+          "source": "./usage.mjs",
+          "specifiers": [
+            "UsageTracker"
+          ]
+        },
+        {
+          "source": "./hooks.mjs",
+          "specifiers": [
+            "HookManager"
+          ]
+        },
+        {
+          "source": "./store.mjs",
+          "specifiers": [
+            "ContextStore"
+          ]
+        },
+        {
+          "source": "./observability.mjs",
+          "specifiers": [
+            "Observability",
+            "telemetryConfigFor"
+          ]
+        },
+        {
+          "source": "./structured.mjs",
+          "specifiers": [
+            "StructuredOutputError",
+            "buildStructuredPrompt",
+            "buildRepairPrompt",
+            "parseStructuredResponse"
+          ]
+        }
+      ],
+      "reExports": [],
+      "shapes": []
+    },
+    "src/hooks.mjs": {
+      "classes": [
+        {
+          "exported": true,
+          "extends": null,
+          "name": "HookManager"
+        }
+      ],
+      "constants": [
+        "HOOK_NAMES"
+      ],
+      "emittedEvents": [],
+      "envVars": [],
+      "errors": [],
+      "exports": [
+        {
+          "kind": "constant",
+          "name": "HOOK_NAMES"
+        },
+        {
+          "kind": "class",
+          "name": "HookManager"
+        }
+      ],
+      "file": "src/hooks.mjs",
+      "functions": [],
+      "imports": [],
+      "reExports": [],
+      "shapes": []
+    },
+    "src/index.mjs": {
+      "classes": [],
+      "constants": [],
+      "emittedEvents": [],
+      "envVars": [],
+      "errors": [],
+      "exports": [],
+      "file": "src/index.mjs",
+      "functions": [],
+      "imports": [],
+      "reExports": [
+        {
+          "name": "CopilotHarness",
+          "source": "./harness.mjs"
+        },
+        {
+          "name": "Harness",
+          "source": "./harness.mjs"
+        },
+        {
+          "name": "createHarness",
+          "source": "./harness.mjs"
+        },
+        {
+          "name": "formatSSE",
+          "source": "./harness.mjs"
+        },
+        {
+          "name": "renderContextPreamble",
+          "source": "./harness.mjs"
+        },
+        {
+          "name": "extractContent",
+          "source": "./harness.mjs"
+        },
+        {
+          "name": "resolveAnswerContent",
+          "source": "./harness.mjs"
+        },
+        {
+          "name": "assertUserMessage",
+          "source": "./harness.mjs"
+        },
+        {
+          "name": "EmptyPromptError",
+          "source": "./harness.mjs"
+        },
+        {
+          "name": "loadConfig",
+          "source": "./config.mjs"
+        },
+        {
+          "name": "loadConfigFile",
+          "source": "./config.mjs"
+        },
+        {
+          "name": "defaultConfig",
+          "source": "./config.mjs"
+        },
+        {
+          "name": "mergeConfig",
+          "source": "./config.mjs"
+        },
+        {
+          "name": "configFromEnv",
+          "source": "./config.mjs"
+        },
+        {
+          "name": "validateConfig",
+          "source": "./config.mjs"
+        },
+        {
+          "name": "resolveSystemPrompt",
+          "source": "./config.mjs"
+        },
+        {
+          "name": "ConfigError",
+          "source": "./config.mjs"
+        },
+        {
+          "name": "REASONING_EFFORTS",
+          "source": "./config.mjs"
+        },
+        {
+          "name": "THINKING_TYPES",
+          "source": "./config.mjs"
+        },
+        {
+          "name": "resolveCliPath",
+          "source": "./cli-path.mjs"
+        },
+        {
+          "name": "findCopilot",
+          "source": "./cli-path.mjs"
+        },
+        {
+          "name": "findClosestModuleDir",
+          "source": "./cli-path.mjs"
+        },
+        {
+          "name": "resolveModuleEntry",
+          "source": "./cli-path.mjs"
+        },
+        {
+          "name": "DEFAULT_CANDIDATES",
+          "source": "./cli-path.mjs"
+        },
+        {
+          "name": "estimateTokens",
+          "source": "./tokens.mjs"
+        },
+        {
+          "name": "estimateMessagesTokens",
+          "source": "./tokens.mjs"
+        },
+        {
+          "name": "analyzeRun",
+          "source": "./tokens.mjs"
+        },
+        {
+          "name": "analyzeRunAccurate",
+          "source": "./tokens.mjs"
+        },
+        {
+          "name": "TokenBudget",
+          "source": "./tokens.mjs"
+        },
+        {
+          "name": "TokenBudgetExceededError",
+          "source": "./tokens.mjs"
+        },
+        {
+          "name": "UsageTracker",
+          "source": "./usage.mjs"
+        },
+        {
+          "name": "HookManager",
+          "source": "./hooks.mjs"
+        },
+        {
+          "name": "HOOK_NAMES",
+          "source": "./hooks.mjs"
+        },
+        {
+          "name": "ContextStore",
+          "source": "./store.mjs"
+        },
+        {
+          "name": "Observability",
+          "source": "./observability.mjs"
+        },
+        {
+          "name": "telemetryConfigFor",
+          "source": "./observability.mjs"
+        },
+        {
+          "name": "loadOtelApi",
+          "source": "./observability.mjs"
+        },
+        {
+          "name": "validateSchema",
+          "source": "./structured.mjs"
+        },
+        {
+          "name": "extractJson",
+          "source": "./structured.mjs"
+        },
+        {
+          "name": "renderStructuredInput",
+          "source": "./structured.mjs"
+        },
+        {
+          "name": "buildStructuredPrompt",
+          "source": "./structured.mjs"
+        },
+        {
+          "name": "buildRepairPrompt",
+          "source": "./structured.mjs"
+        },
+        {
+          "name": "parseStructuredResponse",
+          "source": "./structured.mjs"
+        },
+        {
+          "name": "StructuredOutputError",
+          "source": "./structured.mjs"
+        }
+      ],
+      "shapes": []
+    },
+    "src/observability.mjs": {
+      "classes": [
+        {
+          "exported": true,
+          "extends": null,
+          "name": "Observability"
+        }
+      ],
+      "constants": [],
+      "emittedEvents": [],
+      "envVars": [],
+      "errors": [],
+      "exports": [
+        {
+          "kind": "class",
+          "name": "Observability"
+        },
+        {
+          "kind": "function",
+          "name": "_setOtelApiForTests"
+        },
+        {
+          "kind": "function",
+          "name": "genAiAttributes"
+        },
+        {
+          "kind": "function",
+          "name": "loadOtelApi"
+        },
+        {
+          "kind": "function",
+          "name": "telemetryConfigFor"
+        }
+      ],
+      "file": "src/observability.mjs",
+      "functions": [
+        {
+          "async": true,
+          "exported": true,
+          "generator": false,
+          "name": "loadOtelApi",
+          "signature": "loadOtelApi()"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "_setOtelApiForTests",
+          "signature": "_setOtelApiForTests(api)"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "telemetryConfigFor",
+          "signature": "telemetryConfigFor(obsConfig)"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "genAiAttributes",
+          "signature": "genAiAttributes(attrs = {})"
+        },
+        {
+          "async": false,
+          "exported": false,
+          "generator": false,
+          "name": "noop",
+          "signature": "noop"
+        },
+        {
+          "async": false,
+          "exported": false,
+          "generator": false,
+          "name": "add",
+          "signature": "add"
+        }
+      ],
+      "imports": [],
+      "reExports": [],
+      "shapes": []
+    },
+    "src/runtime.mjs": {
+      "classes": [],
+      "constants": [],
+      "emittedEvents": [],
+      "envVars": [],
+      "errors": [],
+      "exports": [
+        {
+          "kind": "function",
+          "name": "resolveExecutablePath"
+        }
+      ],
+      "file": "src/runtime.mjs",
+      "functions": [
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "resolveExecutablePath",
+          "signature": "resolveExecutablePath({ config = {}, env = process.env, fromDir, required = true } = {})"
+        }
+      ],
+      "imports": [
+        {
+          "source": "./cli-path.mjs",
+          "specifiers": [
+            "resolveCliPath"
+          ]
+        }
+      ],
+      "reExports": [
+        {
+          "name": "resolveModuleEntry",
+          "source": "./cli-path.mjs"
+        },
+        {
+          "name": "findClosestModuleDir",
+          "source": "./cli-path.mjs"
+        },
+        {
+          "name": "readManifestEntry",
+          "source": "./cli-path.mjs"
+        },
+        {
+          "name": "packageRootFromEntry",
+          "source": "./cli-path.mjs"
+        },
+        {
+          "name": "DEFAULT_CANDIDATES",
+          "source": "./cli-path.mjs"
+        }
+      ],
+      "shapes": []
+    },
+    "src/store.mjs": {
+      "classes": [
+        {
+          "exported": true,
+          "extends": null,
+          "name": "ContextStore"
+        }
+      ],
+      "constants": [],
+      "emittedEvents": [],
+      "envVars": [],
+      "errors": [],
+      "exports": [
+        {
+          "kind": "class",
+          "name": "ContextStore"
+        }
+      ],
+      "file": "src/store.mjs",
+      "functions": [
+        {
+          "async": false,
+          "exported": false,
+          "generator": false,
+          "name": "sanitizeId",
+          "signature": "sanitizeId(id)"
+        }
+      ],
+      "imports": [
+        {
+          "source": "node:fs",
+          "specifiers": [
+            "fs"
+          ]
+        },
+        {
+          "source": "node:path",
+          "specifiers": [
+            "path"
+          ]
+        }
+      ],
+      "reExports": [],
+      "shapes": []
+    },
+    "src/structured.mjs": {
+      "classes": [
+        {
+          "exported": true,
+          "extends": "Error",
+          "name": "StructuredOutputError"
+        }
+      ],
+      "constants": [],
+      "emittedEvents": [],
+      "envVars": [],
+      "errors": [
+        "StructuredOutputError"
+      ],
+      "exports": [
+        {
+          "kind": "class",
+          "name": "StructuredOutputError"
+        },
+        {
+          "kind": "function",
+          "name": "buildRepairPrompt"
+        },
+        {
+          "kind": "function",
+          "name": "buildStructuredPrompt"
+        },
+        {
+          "kind": "function",
+          "name": "extractJson"
+        },
+        {
+          "kind": "function",
+          "name": "parseStructuredResponse"
+        },
+        {
+          "kind": "function",
+          "name": "renderStructuredInput"
+        },
+        {
+          "kind": "function",
+          "name": "validateSchema"
+        }
+      ],
+      "file": "src/structured.mjs",
+      "functions": [
+        {
+          "async": false,
+          "exported": false,
+          "generator": false,
+          "name": "typeOf",
+          "signature": "typeOf(value)"
+        },
+        {
+          "async": false,
+          "exported": false,
+          "generator": false,
+          "name": "typeMatches",
+          "signature": "typeMatches(declared, actual)"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "validateSchema",
+          "signature": "validateSchema(value, schema, pathPrefix = '$')"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "extractJson",
+          "signature": "extractJson(text)"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "renderStructuredInput",
+          "signature": "renderStructuredInput(input, label = 'input')"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "buildStructuredPrompt",
+          "signature": "buildStructuredPrompt({ task, input, schema, label })"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "buildRepairPrompt",
+          "signature": "buildRepairPrompt({ errors, schema })"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "parseStructuredResponse",
+          "signature": "parseStructuredResponse(text, schema)"
+        }
+      ],
+      "imports": [],
+      "reExports": [],
+      "shapes": []
+    },
+    "src/tokens.mjs": {
+      "classes": [
+        {
+          "exported": true,
+          "extends": "Error",
+          "name": "TokenBudgetExceededError"
+        },
+        {
+          "exported": true,
+          "extends": null,
+          "name": "TokenBudget"
+        }
+      ],
+      "constants": [],
+      "emittedEvents": [],
+      "envVars": [],
+      "errors": [
+        "TokenBudgetExceededError"
+      ],
+      "exports": [
+        {
+          "kind": "class",
+          "name": "TokenBudget"
+        },
+        {
+          "kind": "class",
+          "name": "TokenBudgetExceededError"
+        },
+        {
+          "kind": "function",
+          "name": "analyzeRun"
+        },
+        {
+          "kind": "function",
+          "name": "analyzeRunAccurate"
+        },
+        {
+          "kind": "function",
+          "name": "estimateMessagesTokens"
+        },
+        {
+          "kind": "function",
+          "name": "estimateTokens"
+        }
+      ],
+      "file": "src/tokens.mjs",
+      "functions": [
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "estimateTokens",
+          "signature": "estimateTokens(text)"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "estimateMessagesTokens",
+          "signature": "estimateMessagesTokens(messages = [])"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "analyzeRun",
+          "signature": "analyzeRun(input, budget)"
+        },
+        {
+          "async": false,
+          "exported": true,
+          "generator": false,
+          "name": "analyzeRunAccurate",
+          "signature": "analyzeRunAccurate(clientOrInput, inputOrBudget, maybeBudget)"
+        }
+      ],
+      "imports": [],
+      "reExports": [],
+      "shapes": []
+    },
+    "src/usage.mjs": {
+      "classes": [
+        {
+          "exported": true,
+          "extends": null,
+          "name": "UsageTracker"
+        }
+      ],
+      "constants": [],
+      "emittedEvents": [],
+      "envVars": [],
+      "errors": [],
+      "exports": [
+        {
+          "kind": "class",
+          "name": "UsageTracker"
+        }
+      ],
+      "file": "src/usage.mjs",
+      "functions": [
+        {
+          "async": false,
+          "exported": false,
+          "generator": false,
+          "name": "pct",
+          "signature": "pct"
+        }
+      ],
+      "imports": [],
+      "reExports": [],
+      "shapes": []
+    }
+  },
+  "package": {
+    "dependencies": {
+      "@github/copilot-sdk": "^1.0.28"
+    },
+    "ecosystem": "nodejs",
+    "engines": {
+      "node": ">=20.6"
+    },
+    "exports": {
+      ".": "./src/index.mjs",
+      "./cli-path": "./src/cli-path.mjs",
+      "./config": "./src/config.mjs",
+      "./hooks": "./src/hooks.mjs",
+      "./observability": "./src/observability.mjs",
+      "./runtime": "./src/runtime.mjs",
+      "./store": "./src/store.mjs",
+      "./structured": "./src/structured.mjs",
+      "./tokens": "./src/tokens.mjs",
+      "./usage": "./src/usage.mjs"
+    },
+    "main": "src/index.mjs",
+    "name": "llm-sdk-github-copilot",
+    "peerDependencies": {
+      "@opentelemetry/api": ">=1.7.0"
+    },
+    "type": "module",
+    "version": "0.1.0"
+  },
+  "summary": {
+    "envVarsDiscovered": [
+      "COPILOT_CLI_MODEL",
+      "COPILOT_CLI_PATH",
+      "COPILOT_CLI_PROXY",
+      "COPILOT_CLI_REASON_EFFORT",
+      "COPILOT_HARNESS_STORE_DIR",
+      "COPILOT_MODEL",
+      "COPILOT_REASONING_EFFORT",
+      "COPILOT_SYSTEM_PROMPT_FILE",
+      "COPILOT_TOKEN_BUDGET",
+      "HTTPS_PROXY",
+      "HTTP_PROXY",
+      "LLM_SDK_MAX_TOKENS",
+      "LLM_SDK_MODEL",
+      "LLM_SDK_REASONING_EFFORT",
+      "LLM_SDK_STORE_DIR",
+      "LLM_SDK_SYSTEM_PROMPT_FILE",
+      "LLM_SDK_TOKEN_BUDGET",
+      "OTEL_EXPORTER_OTLP_ENDPOINT"
+    ],
+    "errorsDiscovered": [
+      "ConfigError",
+      "EmptyPromptError",
+      "StructuredOutputError",
+      "TokenBudgetExceededError"
+    ],
+    "eventsDiscovered": [
+      "budget:exceeded",
+      "budget:warn",
+      "delta",
+      "error:run",
+      "event",
+      "idle",
+      "message",
+      "preflight",
+      "run:end",
+      "run:start",
+      "session:created",
+      "session:replayed",
+      "session:resumed",
+      "started",
+      "stopped",
+      "structured:invalid",
+      "structured:ok",
+      "tool:call",
+      "tool:denied",
+      "tool:error",
+      "tool:result",
+      "tool:start"
+    ],
+    "totalFilesAnalyzed": 11
+  }
+}
