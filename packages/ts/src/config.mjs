@@ -44,6 +44,15 @@ export function defaultConfig(env = process.env) {
     streaming: false,
     requestTimeoutMs: 120_000,
 
+    // --- tools & extensions ---
+    availableTools: null,     // tool allowlist → SessionConfig.availableTools (null = runtime default)
+    excludedTools: null,      // tool denylist → SessionConfig.excludedTools (wins over availableTools)
+    mcpServers: {},           // { name: MCPServerConfig } (local/stdio `command` · http/sse `url`)
+    pluginDirectories: [],    // local plugin dirs, resolved absolute → SessionConfig.pluginDirectories
+    skillDirectories: [],     // skill roots, resolved absolute → SessionConfig.skillDirectories
+    disabledSkills: [],       // skill names to switch off → SessionConfig.disabledSkills
+    builtinPluginDirectories: [], // host-trusted plugin dirs registered at client start
+
     // --- system prompt / instruction document ---
     systemPrompt: null,       // inline instruction text
     systemPromptFile: null,   // path to an instruction document (markdown/text)
@@ -187,10 +196,73 @@ export function validateConfig(config) {
   if (config.systemPromptFile && !fs.existsSync(config.systemPromptFile)) {
     problems.push(`systemPromptFile does not exist: ${config.systemPromptFile}`);
   }
+  validateToolLists(config, problems);
+  validateDirectories(config, problems);
+  validateMcpServers(config.mcpServers, problems);
   if (problems.length) {
     throw new ConfigError(`Invalid harness config:\n  - ${problems.join('\n  - ')}`);
   }
   return config;
+}
+
+/** `availableTools` / `excludedTools` / `disabledSkills` are null or string arrays. */
+function validateToolLists(config, problems) {
+  for (const key of ['availableTools', 'excludedTools', 'disabledSkills']) {
+    const v = config[key];
+    if (v != null && (!Array.isArray(v) || v.some((t) => typeof t !== 'string'))) {
+      problems.push(`${key} must be an array of strings`);
+    }
+  }
+}
+
+/**
+ * Plugin and skill directories must exist: the runtime skips a missing or
+ * malformed directory silently, so catch the common case up front.
+ */
+function validateDirectories(config, problems) {
+  for (const key of ['pluginDirectories', 'skillDirectories', 'builtinPluginDirectories']) {
+    const dirs = config[key];
+    if (dirs == null) continue;
+    if (!Array.isArray(dirs)) { problems.push(`${key} must be an array`); continue; }
+    dirs.forEach((dir, i) => {
+      if (typeof dir !== 'string' || !dir) {
+        problems.push(`${key}[${i}] must be a non-empty path string`);
+      } else if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) {
+        problems.push(`${key}[${i}] is not a directory: ${dir}`);
+      }
+    });
+  }
+}
+
+/**
+ * Validate `config.mcpServers` as Record<name, MCPServerConfig>. In-process
+ * (`type: 'sdk'`) entries from the Agent SDK sibling pass through untouched
+ * so a swapped config still validates.
+ */
+function validateMcpServers(mcpServers, problems) {
+  if (mcpServers == null) return;
+  if (!isPlainObject(mcpServers)) { problems.push('mcpServers must be an object'); return; }
+  for (const [name, srv] of Object.entries(mcpServers)) {
+    if (!isPlainObject(srv)) { problems.push(`mcpServers.${name} must be an object`); continue; }
+    if (srv.type === 'sdk') continue;
+    if (srv.type === 'http' || srv.type === 'sse') {
+      if (typeof srv.url !== 'string') problems.push(`mcpServers.${name}: ${srv.type} server requires a string url`);
+    } else if (srv.type == null || srv.type === 'local' || srv.type === 'stdio') {
+      if (typeof srv.command !== 'string') problems.push(`mcpServers.${name}: local server requires a string command`);
+    } else {
+      problems.push(`mcpServers.${name}: unknown server type "${srv.type}"`);
+    }
+    if (srv.tools != null && !Array.isArray(srv.tools)) problems.push(`mcpServers.${name}.tools must be an array`);
+  }
+}
+
+/**
+ * Resolve directory paths to absolute. The runtime is a separate process whose
+ * working directory (`workingDirectory`) may differ from this one's, so a
+ * relative path would resolve against the wrong root.
+ */
+export function resolveDirectories(dirs) {
+  return Array.isArray(dirs) ? dirs.map((d) => path.resolve(d)) : [];
 }
 
 /**

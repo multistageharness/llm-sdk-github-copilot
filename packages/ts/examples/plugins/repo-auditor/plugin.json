@@ -1,0 +1,5 @@
+{
+  "name": "repo-auditor",
+  "version": "0.1.0",
+  "description": "Example local plugin: a read-only code-auditing skill."
+}

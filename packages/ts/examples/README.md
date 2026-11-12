@@ -41,3 +41,4 @@ Prerequisites: the Copilot CLI must be authenticated (`gh auth status` or
 | 23 | `23-repl-chatbot.mjs` | Interactive terminal REPL over one persistent session |
 | 24 | `24-enterprise-proxy.mjs` | `httpProxy` + `proxyFromEnv: false` + headless `COPILOT_GITHUB_TOKEN` auth |
 | 25 | `25-policy-gated-investigator.mjs` | Policy-gated investigation: bare-name tool veto cached by `toolUseId`, handler-side PII redaction, schema-validated + citation-verified report — P-25 (P-30, P-31, P-43, P-34–P-36, P-46) |
+| 26 | `26-plugins.mjs` | Local directory plugin (`pluginDirectories`) + `excludedTools` scoping + optional `--mcp` server — P-38, P-33 · **demo-grade** |

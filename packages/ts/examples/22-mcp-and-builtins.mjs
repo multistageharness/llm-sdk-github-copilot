@@ -1,7 +1,9 @@
 // 22 — Built-in MCPs + sessionDefaults + a bridged SDK hook.
 //
-// baseConfig defaults cliArgs to ['--disable-builtin-mcps'] to keep the other
-// examples on the bare SDK surface. This example deliberately does the opposite:
+// baseConfig defaults cliArgs to ['--disable-builtin-mcps'] (only when the full
+// @github/copilot CLI resolves — the SDK's bundled runtime rejects that flag) to
+// keep the other examples on the bare SDK surface. This example deliberately
+// does the opposite:
 //   - overrides cliArgs (does NOT inherit --disable-builtin-mcps) so the
 //     runtime's built-in MCP servers/tools stay enabled,
 //   - sets a sessionDefaults value (an escape-hatch forwarded verbatim into the

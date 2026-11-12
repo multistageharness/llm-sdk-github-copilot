@@ -23,6 +23,8 @@
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { resolveCliPath } from '../src/cli-path.mjs';
+
 const packageDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repoRoot = resolve(packageDir, '..', '..');
 // Documented package names whose dirs have since moved on disk.
@@ -119,6 +121,22 @@ function resolveTokenBudget(args, exampleBudget) {
   };
 }
 
+/**
+ * Extra runtime args for the examples. `--disable-builtin-mcps` is a flag of the
+ * full `@github/copilot` CLI; the SDK's bundled `copilot-runtime` (spawned when
+ * no CLI path resolves, e.g. in cloud installs without @github/copilot) rejects
+ * it with "unsupported argument". Only pass it when the full CLI will be used.
+ */
+function defaultCliArgs(args) {
+  let cliPath = null;
+  try {
+    cliPath = resolveCliPath({ cliPath: args.cliPath, required: false });
+  } catch {
+    // invalid explicit path — the harness reports it on start()
+  }
+  return cliPath ? ['--disable-builtin-mcps'] : [];
+}
+
 /** Harness config overrides shared by all examples. */
 export function baseConfig(args, extra = {}) {
   const { tokenBudget: exampleBudget, ...restExtra } = extra;
@@ -129,7 +147,7 @@ export function baseConfig(args, extra = {}) {
     ...(args.cliPath && { cliPath: args.cliPath }),
     ...(args.httpProxy && { httpProxy: args.httpProxy }),
     // Keep examples on the bare SDK surface.
-    cliArgs: ['--disable-builtin-mcps'],
+    cliArgs: defaultCliArgs(args),
     ...restExtra,
     ...(tokenBudget && { tokenBudget }),
   };

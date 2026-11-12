@@ -19,7 +19,7 @@
 
 import { EventEmitter } from 'node:events';
 
-import { loadConfig, resolveSystemPrompt } from './config.mjs';
+import { loadConfig, resolveSystemPrompt, resolveDirectories } from './config.mjs';
 import { resolveCliPath } from './cli-path.mjs';
 import {
   TokenBudget,
@@ -36,6 +36,9 @@ import {
   buildRepairPrompt,
   parseStructuredResponse,
 } from './structured.mjs';
+
+/** Model ids the runtime routes itself; these reject an explicit reasoningEffort. */
+const RUNTIME_ROUTED_MODELS = new Set(['auto', 'fusion']);
 
 /** Format one Server-Sent-Events frame. */
 export function formatSSE({ event, data, id } = {}) {
@@ -248,6 +251,8 @@ export class CopilotHarness extends EventEmitter {
       ...(this.config.logLevel && { logLevel: this.config.logLevel }),
       ...(this.config.githubToken && { gitHubToken: this.config.githubToken }),
     };
+    const builtinPlugins = resolveDirectories(this.config.builtinPluginDirectories);
+    if (builtinPlugins.length) clientOptions.builtinPluginDirectories = builtinPlugins;
 
     const telemetry = telemetryConfigFor(this.config.observability);
     if (telemetry) clientOptions.telemetry = telemetry;
@@ -441,6 +446,7 @@ export class CopilotHarness extends EventEmitter {
     const systemPrompt = opts.systemPrompt ?? resolveSystemPrompt(cfg);
     const sessionConfig = {
       ...cfg.sessionDefaults,
+      ...this._extensionConfig(),
       model: opts.model ?? cfg.model,
       reasoningEffort: opts.reasoningEffort ?? cfg.reasoningEffort,
       streaming: opts.streaming ?? cfg.streaming,
@@ -451,6 +457,10 @@ export class CopilotHarness extends EventEmitter {
       onEvent: (event) => this._onSessionEvent(event),
       ...opts.sessionConfig,
     };
+    // `auto` / `fusion` let the runtime pick the model; it rejects an explicit effort then.
+    if (RUNTIME_ROUTED_MODELS.has(String(sessionConfig.model).toLowerCase())) {
+      delete sessionConfig.reasoningEffort;
+    }
     if (systemPrompt) {
       sessionConfig.systemMessage = cfg.systemPromptMode === 'replace'
         ? { mode: 'replace', content: systemPrompt }
@@ -460,6 +470,25 @@ export class CopilotHarness extends EventEmitter {
       sessionConfig.tools = this._tools.map((t) => this._wrapTool(t));
     }
     return sessionConfig;
+  }
+
+  /**
+   * Tool scoping, MCP servers, and plugin/skill directories for a session.
+   * Only configured keys are emitted, so `sessionDefaults` still supplies them
+   * when the dedicated config is left empty.
+   */
+  _extensionConfig() {
+    const cfg = this.config;
+    const out = {};
+    if (Array.isArray(cfg.availableTools)) out.availableTools = cfg.availableTools;
+    if (Array.isArray(cfg.excludedTools)) out.excludedTools = cfg.excludedTools;
+    if (cfg.mcpServers && Object.keys(cfg.mcpServers).length) out.mcpServers = cfg.mcpServers;
+    const plugins = resolveDirectories(cfg.pluginDirectories);
+    if (plugins.length) out.pluginDirectories = plugins;
+    const skills = resolveDirectories(cfg.skillDirectories);
+    if (skills.length) out.skillDirectories = skills;
+    if (cfg.disabledSkills?.length) out.disabledSkills = cfg.disabledSkills;
+    return out;
   }
 
   /** Create a fresh session (disconnecting any current one). */
@@ -673,6 +702,9 @@ export class CopilotHarness extends EventEmitter {
 
   async _chat(prompt, opts, agentSpan) {
     await this._ensureSession(opts);
+    // The root span opens before the first session exists (lazy creation), so
+    // stamp the conversation id once it is known.
+    if (this.sessionId) agentSpan.setAttribute('gen_ai.conversation.id', this.sessionId);
     const finalPrompt = this._composePrompt(prompt, opts);
     const analysis = this.preflight(finalPrompt, { ...opts, context: [] });
     await this.hooks.run('beforeRun', { prompt: finalPrompt, sessionId: this.sessionId, analysis });

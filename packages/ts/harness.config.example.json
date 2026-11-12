@@ -30,5 +30,12 @@
   "structured": {
     "maxRepairAttempts": 2
   },
+  "availableTools": null,
+  "excludedTools": null,
+  "mcpServers": {},
+  "pluginDirectories": [],
+  "skillDirectories": [],
+  "disabledSkills": [],
+  "builtinPluginDirectories": [],
   "sessionDefaults": {}
 }

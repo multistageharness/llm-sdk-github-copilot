@@ -71,15 +71,20 @@ See [`harness.config.example.json`](harness.config.example.json) for every key.
 | `cliPath` | auto | Explicit Copilot CLI entry (**CLI_PATH**). Fallback chain: `COPILOT_CLI_PATH` env → module resolution of `@github/copilot` → `node_modules` walk (vendored from [findCopilotNodeModuleDirectoryPath](https://github.com/carlosmarte/findCopilotNodeModuleDirectoryPath)) → SDK bundled runtime |
 | `cliArgs` | `[]` | Extra runtime args (e.g. `--disable-builtin-mcps`) |
 | `httpProxy` | env | **HTTP_PROXY (optional)** — applied to the spawned CLI's env only, never `process.env`; set `proxyFromEnv: false` to ignore ambient proxy vars |
-| `model` | `gpt-5-mini` | Model id per session |
-| `reasoningEffort` | `low` | `low` / `medium` / `high` / `xhigh` |
+| `model` | `gpt-5-mini` | Model id per session (`auto` / `fusion` let the runtime choose) |
+| `reasoningEffort` | `low` | `low` / `medium` / `high` / `xhigh` — omitted from the session when `model` is `auto` or `fusion` |
 | `streaming` | `false` | Emit `assistant.message_delta` events |
 | `systemPrompt` / `systemPromptFile` | — | Instruction document; `systemPromptMode: append\|replace` controls how it lands in the system message |
 | `tokenBudget.maxTokens` | `null` | Hard ceiling on cumulative tokens; `enforcement: block` throws pre-run, `warn` proceeds + emits |
 | `contextStore` | disabled | `{ enabled, directory }` — persist request/response context windows to the filesystem |
 | `observability` | disabled | OTel wiring (below) |
 | `structured.maxRepairAttempts` | `2` | Auto-repair rounds for structured output |
-| `sessionDefaults` | `{}` | Escape hatch merged into every SDK `SessionConfig` |
+| `availableTools` / `excludedTools` | `null` | Built-in tool scoping forwarded to the session (`excludedTools` wins) |
+| `mcpServers` | `{}` | External MCP servers: `{ type: 'local', command, args, tools }` or `{ type: 'http'\|'sse', url }` |
+| `pluginDirectories` / `skillDirectories` | `[]` | Local plugin / skill directories for each session; resolved to absolute paths and must exist |
+| `disabledSkills` | `[]` | Skill names to switch off for the session |
+| `builtinPluginDirectories` | `[]` | Host-trusted plugin directories registered on the client at start |
+| `sessionDefaults` | `{}` | Escape hatch merged into every SDK `SessionConfig` (the dedicated keys above win when set) |
 
 Environment variables: `COPILOT_CLI_PATH`, `HTTP_PROXY`/`HTTPS_PROXY`,
 `COPILOT_MODEL`, `COPILOT_REASONING_EFFORT`, `COPILOT_TOKEN_BUDGET`,
